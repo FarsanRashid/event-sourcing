@@ -26,6 +26,8 @@ class Cart:
             self._items.append(event.item)
         elif isinstance(event, ItemRemoved):
             self._items.remove(event.item)
+        else:
+            raise Exception(f"Unknown event {event}")
 
         self._version = self._version + 1
         self.uncommited_events.append(event)

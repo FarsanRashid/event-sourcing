@@ -3,9 +3,11 @@ from command_handlers import CreateCartHandler, RemoveItemHandler
 from command_handlers import AddItemHandler
 from commands import CreateCart, RemoveItem
 from commands import AddItem
-from event_store import EventStore
+from event_store import EventStoreDB, InMemoryEventStore
 
-event_store = EventStore()
+event_store = EventStoreDB()
+
+# event_store = InMemoryEventStore()
 
 # create a cart
 handler = CreateCartHandler(event_store)

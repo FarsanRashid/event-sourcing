@@ -1,15 +1,23 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import uuid
 
 
+@dataclass
 class Event:
-    pass
+    def to_dict(self):
+        data = asdict(self)
+        return data
 
 
 @dataclass
 class CartCreated(Event):
     customer_id: str
     cart_id: uuid.UUID
+
+    def to_dict(self):
+        data = asdict(self)
+        data["cart_id"] = str(self.cart_id)
+        return data
 
 
 @dataclass
