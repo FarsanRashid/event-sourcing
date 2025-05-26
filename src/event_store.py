@@ -56,9 +56,9 @@ class EventStoreDB(EventStore):
                 current_version=StreamState.ANY,
             )
 
-    def get_event_type(self, event_type: RecordedEvent):
-        cls = self.EVENT_TYPE_MAP[event_type.type]
-        return cls(**json.loads(event_type.data.decode("utf-8")))
+    def _get_event(self, recorded_event: RecordedEvent) -> Event:
+        cls = self.EVENT_TYPE_MAP[recorded_event.type]
+        return cls(**json.loads(recorded_event.data.decode("utf-8")))
 
     def get_events(self, stream_name: str):
         events = self._event_store.get_stream(
@@ -66,4 +66,4 @@ class EventStoreDB(EventStore):
             stream_position=0,
             limit=100,
         )
-        return [self.get_event_type(event) for event in events]
+        return [self._get_event(event) for event in events]
