@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import json
 from typing import Dict, List
-import uuid
 
 from kurrentdbclient import KurrentDBClient, NewEvent, StreamState
 from kurrentdbclient import RecordedEvent
@@ -11,27 +10,27 @@ from events import CartCreated, Event, ItemAdded, ItemRemoved
 
 class EventStore(ABC):
     @abstractmethod
-    def commit_events(self, id: uuid.UUID, events: List[Event]):
+    def commit_events(self, stream_name: str, events: List[Event]):
         raise NotImplementedError
 
     @abstractmethod
-    def get_events(self, id: uuid.UUID):
+    def get_events(self, stream_name: str):
         raise NotImplementedError
 
 
 class InMemoryEventStore(EventStore):
     def __init__(self) -> None:
-        self._event_store: Dict[uuid.UUID, List[Event]] = {}
+        self._event_store: Dict[str, List[Event]] = {}
 
-    def commit_events(self, id: uuid.UUID, events: List[Event]):
+    def commit_events(self, stream_name: str, events: List[Event]):
         for event in events:
-            if id in self._event_store:
-                self._event_store[id].append(event)
+            if stream_name in self._event_store:
+                self._event_store[stream_name].append(event)
             else:
-                self._event_store[id] = [event]
+                self._event_store[stream_name] = [event]
 
-    def get_events(self, id: uuid.UUID):
-        return self._event_store[id]
+    def get_events(self, stream_name: str):
+        return self._event_store[stream_name]
 
 
 class EventStoreDB(EventStore):
@@ -44,7 +43,7 @@ class EventStoreDB(EventStore):
         self._event_store = KurrentDBClient(
             uri="esdb://localhost:2113?tls=false")
 
-    def commit_events(self, id: uuid.UUID, events: List[Event]):
+    def commit_events(self, stream_name: str, events: List[Event]):
         for event in events:
             new_event = NewEvent(
                 type=event.__class__.__name__,
@@ -52,7 +51,7 @@ class EventStoreDB(EventStore):
                 content_type="application/json",
             )
             self._event_store.append_to_stream(
-                stream_name=str(id),
+                stream_name=stream_name,
                 events=[new_event],
                 current_version=StreamState.ANY,
             )
@@ -61,9 +60,9 @@ class EventStoreDB(EventStore):
         cls = self.EVENT_TYPE_MAP[event_type.type]
         return cls(**json.loads(event_type.data.decode("utf-8")))
 
-    def get_events(self, id: uuid.UUID):
+    def get_events(self, stream_name: str):
         events = self._event_store.get_stream(
-            stream_name=str(id),
+            stream_name=stream_name,
             stream_position=0,
             limit=100,
         )

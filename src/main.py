@@ -5,9 +5,9 @@ from commands import CreateCart, RemoveItem
 from commands import AddItem
 from event_store import EventStoreDB, InMemoryEventStore
 
-event_store = EventStoreDB()
+# event_store = EventStoreDB()
 
-# event_store = InMemoryEventStore()
+event_store = InMemoryEventStore()
 
 # create a cart
 handler = CreateCartHandler(event_store)
@@ -24,7 +24,7 @@ handler.handle(AddItem(cart.cart_id, "orange"))
 handler = RemoveItemHandler(event_store)
 handler.handle(RemoveItem(cart.cart_id, "apple"))
 
-events = event_store.get_events(cart.cart_id)
+events = event_store.get_events(handler._get_stream_name(cart.cart_id))
 cart = Cart(events)
 print(events)
 print(cart)
